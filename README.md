@@ -43,3 +43,13 @@ This sub folder contains scripts that run on lambda connecting to SSM. Using SSM
 ##### 3. If you like to setup a cron schedule:
 * Add trigger to your lambda function (Trigger name: CloudWatch Events/EventBridge)
 * Refer [aws docs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html) for scheduling format.
+
+##### 4. If you like to include historical report graphs for your stocks:
+* Use files in the repo [Historical_Graphs_Included](https://github.com/vignesh1793/stock_hawk_AWS/tree/master/Historical_Graphs_Included)
+* This uses the historical data for your stocks and plots the data as a graph.
+* Use /tmp/ for it to work on AWS (default writable folder by AWS)
+* matplotlib could be a tricky part to implement on lambda so I have added few steps below.
+* Go to https://pypi.org/project/matplotlib/#files
+* Choose your python version (37 for 3.7 and 38 for 3.8) and download the manylinux1_x86_64.whl file.
+* unzip filename.whl && rm filename.whl
+* zip all your folders together and upload it to an S3 bucket and run your lambda connecting to S3.
