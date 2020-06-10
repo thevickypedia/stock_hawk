@@ -101,7 +101,7 @@ def send_email():
     sender_env = AWSClients().sender()
     recipient_env = AWSClients().recipient()
     logs = 'https://us-west-2.console.aws.amazon.com/cloudwatch/home#logStream:group=/aws/lambda/robinhood'
-    git = 'https://github.com/vignesh1793/stock_hawk'
+    git = 'https://github.com/thevickypedia/stock_hawk'
     footer_text = "\n----------------------------------------------------------------" \
                   "----------------------------------------\n" \
                   "A report on the list shares you have purchased.\n" \

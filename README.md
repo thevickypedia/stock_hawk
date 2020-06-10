@@ -22,7 +22,7 @@ This sub folder contains scripts that run on lambda connecting to SSM. Using SSM
 
 * Name = user; Value = Robinhood login email address
 * Name = pass; Value = Robinhood login password
-* Name = qr; Value = Robinhood MFA QR code (Check for steps in original [README.md](https://github.com/vignesh1793/robinhood_tracker/blob/master/README.md))
+* Name = qr; Value = Robinhood MFA QR code (Check for steps in original [README.md](https://github.com/thevickypedia/robinhood_tracker/blob/master/README.md))
 * Name = ACCESS_KEY; Value = AWS login access key
 * Name = SECRET_KEY; Value = AWS secret key
 * Name = SENDER; Value = sender email address (verified via AWS SES)
@@ -45,7 +45,7 @@ This sub folder contains scripts that run on lambda connecting to SSM. Using SSM
 * Refer [aws docs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html) for scheduling format.
 
 ##### 4. If you like to include historical report graphs for your stocks:
-* Use files in the repo [Historical_Graphs_Included](https://github.com/vignesh1793/stock_hawk_AWS/tree/master/Historical_Graphs_Included)
+* Use files in the repo [Historical_Graphs_Included](https://github.com/thevickypedia/stock_hawk_AWS/tree/master/Historical_Graphs_Included)
 * This uses the historical data for your stocks and plots the data as a graph.
 * Use /tmp/ for it to work on AWS (default writable folder by AWS)
 * matplotlib could be a tricky part to implement on lambda so I have added few steps below.
