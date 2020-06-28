@@ -58,6 +58,6 @@ This sub folder contains scripts that run on lambda connecting to SSM. Using SSM
 
 ## License & copyright
 
-&copy; Vignesh Sivanandha Rao, Robinhood Monitor
+&copy; Vignesh Sivanandha Rao, Stock Hawk
 
 Licensed under the [MIT License](LICENSE)
