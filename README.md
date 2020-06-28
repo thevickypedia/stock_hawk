@@ -55,3 +55,9 @@ This sub folder contains scripts that run on lambda connecting to SSM. Using SSM
 * Choose your python version (37 for 3.7 and 38 for 3.8) and download the manylinux1_x86_64.whl file.
 * unzip filename.whl && rm filename.whl
 * zip all your folders together and upload it to an S3 bucket and run your lambda connecting to S3.
+
+## License & copyright
+
+&copy; Vignesh Sivanandha Rao, Robinhood Monitor
+
+Licensed under the [MIT License](LICENSE)
