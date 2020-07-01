@@ -25,26 +25,24 @@ print(dt_string)
 print('Gathering your investment details...')
 
 
-def account_user_id():
-    ac = rh.get_account()
-    user = ac['account_number']
-    return user
-
-
 def watcher():
-    acc_id = account_user_id()
     raw_result = (rh.positions())
     result = raw_result['results']
     shares_total = []
-    port_msg = f'Your portfolio ({acc_id}):\n'
+    port_msg = f'Your portfolio:\n'
     loss_output = 'Loss:'
     profit_output = 'Profit:'
     loss_total = []
     profit_total = []
+    n = 0
     for data in result:
         share_id = str(data['instrument'].split('/')[-2])
         buy = round(float(data['average_buy_price']), 2)
         shares_count = data['quantity'].split('.')[0]
+        if int(shares_count) != 0:
+            n = n + 1
+        else:
+            continue
         raw_details = rh.get_quote(share_id)
         share_name = (raw_details['symbol'])
         call = raw_details['instrument']
@@ -73,31 +71,30 @@ def watcher():
     port_msg += f'The below values will differ from overall profit/loss if shares were purchased ' \
                 f'with different price values.\nTotal Profit: ${gained}\nTotal Loss: ${lost}\n'
     net_worth = round(float(rh.equity()), 2)
-    output_ = f'\nCurrent value of your total investment is: ${net_worth}'
+    output = f'Total number of stocks purchased: {n}\n'
+    output += f'\nCurrent value of your total investment is: ${net_worth}'
     total_buy = round(math.fsum(shares_total), 2)
-    output_ += f'\nValue of your total investment while purchase is: ${total_buy}'
+    output += f'\nValue of your total investment while purchase is: ${total_buy}'
     total_diff = round(float(net_worth - total_buy), 2)
     if total_diff < 0:
-        output_ += f'\nOverall Loss: ${total_diff}'
+        output += f'\nOverall Loss: ${total_diff}'
     else:
-        output_ += f'\nOverall Profit: ${total_diff}'
+        output += f'\nOverall Profit: ${total_diff}'
     yesterday_close = round(float(rh.equity_previous_close()), 2)
     two_day_diff = round(float(net_worth - yesterday_close), 2)
-    output_ += f"\n\nYesterday's closing value: ${yesterday_close}"
+    output += f"\n\nYesterday's closing value: ${yesterday_close}"
     if two_day_diff < 0:
-        output_ += f"\nCurrent Dip: ${two_day_diff}"
+        output += f"\nCurrent Dip: ${two_day_diff}"
     else:
-        output_ += f"\nCurrent Spike: ${two_day_diff}"
+        output += f"\nCurrent Spike: ${two_day_diff}"
     # # use this if you wish to have conditional emails/notifications
-    # final_output = f'{output_}\n\n{port_msg}\n{profit_output}\n{loss_output}'
+    # final_output = f'{output}\n\n{port_msg}\n{profit_output}\n{loss_output}'
     # return final_output
-    return port_msg, profit_output, loss_output, output_
-
-
-port_head, profit, loss, overall_result = watcher()
+    return port_msg, profit_output, loss_output, output
 
 
 def send_email():
+    port_head, profit, loss, overall_result = watcher()
     sender_env = AWSClients().sender()
     recipient_env = AWSClients().recipient()
     logs = 'https://us-west-2.console.aws.amazon.com/cloudwatch/home#logStream:group=/aws/lambda/robinhood'
@@ -113,27 +110,24 @@ def send_email():
     text = f'{overall_result}\n\n{port_head}\n{profit}\n{loss}\n\nNavigate to check logs: {logs}\n\n{footer_text}'
     # # use this if you wish to have conditional emails/notifications
     # text = f'{watcher()}\n\nNavigate to check logs: {logs}\n\n{footer_text}'
-    email = Emailer(sender, recipient, title, text)
-    return email
+    Emailer(sender, recipient, title, text)
+    return overall_result
 
 
 # two arguments for the below functions as lambda passes event, context by default
 def send_whatsapp(data, context):
-    if send_email():
-        whatsapp_send = AWSClients().send()
-        whatsapp_receive = AWSClients().receive()
-        sid = AWSClients().sid()
-        token = AWSClients().token()
-        client = Client(sid, token)
-        from_number = f"whatsapp:{whatsapp_send}"
-        to_number = f"whatsapp:{whatsapp_receive}"
-        client.messages.create(body=f'{dt_string}\nRobinhood Report\n{overall_result}\n\nCheck your email for '
-                                    f'summary',
-                               from_=from_number,
-                               to=to_number)
-        print(f"Script execution time: {round(float(time.time() - start_time), 2)} seconds")
-    else:
-        return None
+    whatsapp_send = AWSClients().send()
+    whatsapp_receive = AWSClients().receive()
+    sid = AWSClients().sid()
+    token = AWSClients().token()
+    client = Client(sid, token)
+    from_number = f"whatsapp:{whatsapp_send}"
+    to_number = f"whatsapp:{whatsapp_receive}"
+    client.messages.create(body=f'{dt_string}\nRobinhood Report\n{send_email()}\n\nCheck your email for '
+                                f'summary',
+                           from_=from_number,
+                           to=to_number)
+    print(f"Script execution time: {round(float(time.time() - start_time), 2)} seconds")
 
 
 if __name__ == '__main__':
