@@ -1,31 +1,37 @@
-import json
-import math
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import requests
-from pyrh import Robinhood
-from twilio.rest import Client
 
 from lib.aws_client import AWSClients
-from lib.emailer import Emailer
 
-u = AWSClients().user()
-p = AWSClients().pass_()
-q = AWSClients().qr_code()
 start_time = time.time()
-
-rh = Robinhood()
-rh.login(username=u, password=p, qr_code=q)
-
 now = datetime.now() - timedelta(hours=5)
 dt_string = now.strftime("%A, %B %d, %Y %I:%M %p")
 
-print(dt_string)
-print('Gathering your investment details...')
+
+def market_status():
+    url = requests.get('https://www.nasdaqtrader.com/trader.aspx?id=Calendar')
+    today = date.today().strftime("%B %-d, %Y")
+    if today in url.text:
+        # doesn't return anything which exits the code
+        print(f'{today}: The markets are closed today.')
+    else:
+        # you can return any random value but it should return something
+        return True
 
 
 def watcher():
+    from pyrh import Robinhood
+    import json
+    import math
+    u = AWSClients().user()
+    p = AWSClients().pass_()
+    q = AWSClients().qr_code()
+    rh = Robinhood()
+    rh.login(username=u, password=p, qr_code=q)
+    print(dt_string)
+    print('Gathering your investment details...')
     raw_result = (rh.positions())
     result = raw_result['results']
     shares_total = []
@@ -56,14 +62,16 @@ def watcher():
         current_total = round(int(shares_count) * current, 2)
         difference = round(float(current_total - total), 2)
         if difference < 0:
-            loss_output += (f'\n{share_full_name}:\n{shares_count} shares of {share_name} at ${buy} Currently: ${current}\n'
-                            f'Total bought: ${total} Current Total: ${current_total}'
-                            f'\nLOST ${-difference}\n')
+            loss_output += (
+                f'\n{share_full_name}:\n{shares_count} shares of {share_name} at ${buy} Currently: ${current}\n'
+                f'Total bought: ${total} Current Total: ${current_total}'
+                f'\nLOST ${-difference}\n')
             loss_total.append(-difference)
         else:
-            profit_output += (f'\n{share_full_name}:\n{shares_count} shares of {share_name} at ${buy} Currently: ${current}\n'
-                              f'Total bought: ${total} Current Total: ${current_total}'
-                              f'\nGained ${difference}\n')
+            profit_output += (
+                f'\n{share_full_name}:\n{shares_count} shares of {share_name} at ${buy} Currently: ${current}\n'
+                f'Total bought: ${total} Current Total: ${current_total}'
+                f'\nGained ${difference}\n')
             profit_total.append(difference)
 
     lost = round(math.fsum(loss_total), 2)
@@ -95,6 +103,7 @@ def watcher():
 
 def send_email():
     port_head, profit, loss, overall_result = watcher()
+    from lib.emailer import Emailer
     sender_env = AWSClients().sender()
     recipient_env = AWSClients().recipient()
     logs = 'https://us-west-2.console.aws.amazon.com/cloudwatch/home#logStream:group=/aws/lambda/robinhood'
@@ -116,18 +125,22 @@ def send_email():
 
 # two arguments for the below functions as lambda passes event, context by default
 def send_whatsapp(data, context):
-    whatsapp_send = AWSClients().send()
-    whatsapp_receive = AWSClients().receive()
-    sid = AWSClients().sid()
-    token = AWSClients().token()
-    client = Client(sid, token)
-    from_number = f"whatsapp:{whatsapp_send}"
-    to_number = f"whatsapp:{whatsapp_receive}"
-    client.messages.create(body=f'{dt_string}\nRobinhood Report\n{send_email()}\n\nCheck your email for '
-                                f'summary',
-                           from_=from_number,
-                           to=to_number)
-    print(f"Script execution time: {round(float(time.time() - start_time), 2)} seconds")
+    if market_status():
+        from twilio.rest import Client
+        whatsapp_send = AWSClients().send()
+        whatsapp_receive = AWSClients().receive()
+        sid = AWSClients().sid()
+        token = AWSClients().token()
+        client = Client(sid, token)
+        from_number = f"whatsapp:{whatsapp_send}"
+        to_number = f"whatsapp:{whatsapp_receive}"
+        client.messages.create(body=f'{dt_string}\nRobinhood Report\n{send_email()}\n\nCheck your email for '
+                                    f'summary',
+                               from_=from_number,
+                               to=to_number)
+        print(f"Script execution time: {round(float(time.time() - start_time), 2)} seconds")
+    else:
+        return  # a plain return acts as a break statement as the None value is not used anywhere
 
 
 if __name__ == '__main__':
