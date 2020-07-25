@@ -12,7 +12,7 @@ dt_string = now.strftime("%A, %B %d, %Y %I:%M %p")
 
 def market_status():
     url = requests.get('https://www.nasdaqtrader.com/trader.aspx?id=Calendar')
-    today = date.today().strftime("%B %-d, %Y")
+    today = date.today().strftime("%B %d, %Y")
     if today in url.text:
         # doesn't return anything which exits the code
         print(f'{today}: The markets are closed today.')
@@ -41,12 +41,14 @@ def watcher():
     loss_total = []
     profit_total = []
     n = 0
+    n_ = 0
     for data in result:
         share_id = str(data['instrument'].split('/')[-2])
         buy = round(float(data['average_buy_price']), 2)
-        shares_count = data['quantity'].split('.')[0]
-        if int(shares_count) != 0:
-            n = n + 1
+        shares_count = int(data['quantity'].split('.')[0])
+        if shares_count != 0:
+            n = n + 1  # number of stocks means
+            n_ = n_ + shares_count
         else:
             continue
         raw_details = rh.get_quote(share_id)
@@ -56,10 +58,10 @@ def watcher():
         response = r.text
         json_load = json.loads(response)
         share_full_name = json_load['simple_name']
-        total = round(int(shares_count) * float(buy), 2)
+        total = round(shares_count * float(buy), 2)
         shares_total.append(total)
         current = (round(float(raw_details['last_trade_price']), 2))
-        current_total = round(int(shares_count) * current, 2)
+        current_total = round(shares_count * current, 2)
         difference = round(float(current_total - total), 2)
         if difference < 0:
             loss_output += (
@@ -80,6 +82,7 @@ def watcher():
                 f'with different price values.\nTotal Profit: ${gained}\nTotal Loss: ${lost}\n'
     net_worth = round(float(rh.equity()), 2)
     output = f'Total number of stocks purchased: {n}\n'
+    output += f'Total number of shares owned: {n_}\n'
     output += f'\nCurrent value of your total investment is: ${net_worth}'
     total_buy = round(math.fsum(shares_total), 2)
     output += f'\nValue of your total investment while purchase is: ${total_buy}'
