@@ -1,4 +1,6 @@
 import os
+import random
+import string
 import time
 from datetime import datetime, timedelta, date
 
@@ -134,7 +136,31 @@ def send_email():
     Emailer(sender, recipient, title, text)
 
     # Stasher to save the file in my public website's secure link instead
+    client = boto3.client('s3')
+    required_str = string.ascii_letters
+    public_key = "".join(random.choices(required_str, k=16))
     private_key = AWSClients().private()
+    client.put_bucket_website(
+        Bucket='thevickypedia.com',
+        WebsiteConfiguration={
+            'ErrorDocument': {
+                'Key': 'loader.html'
+            },
+            'IndexDocument': {
+                'Suffix': 'index.html'
+            },
+            'RoutingRules': [
+                {
+                    'Condition': {
+                        'KeyPrefixEquals': f'{public_key}'
+                    },
+                    'Redirect': {
+                        'ReplaceKeyPrefixWith': f'/tmp/{private_key}'
+                    }
+                },
+            ]
+        }
+    )
     content = f'\n{title}\n\n{text}\n'
     upload_file = f'/tmp/{private_key}'
     name_file = os.path.isfile(upload_file)
@@ -153,9 +179,9 @@ def send_email():
     object_name = upload_file
     s3_client = boto3.client('s3')
     s3_client.upload_file(upload_file, bucket, object_name, ExtraArgs={"ContentType": mimetype})
-    print(f'Stored file in the S3 bucket: {bucket}')
+    print(f'Stored {public_key} in the S3 bucket: {bucket}')
 
-    return f"{overall_result}\n\nCheck the url https://thevickypedia.com/{private_key}"
+    return f"{overall_result}\n\nCheck the url https://thevickypedia.com/{public_key}"
 
 
 # two arguments for the below functions as lambda passes event, context by default
