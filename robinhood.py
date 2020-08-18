@@ -1,6 +1,8 @@
+import os
 import time
 from datetime import datetime, timedelta, date
 
+import boto3
 import requests
 
 from lib.aws_client import AWSClients
@@ -111,7 +113,8 @@ def send_email():
     recipient_env = AWSClients().recipient()
     logs = 'https://us-west-2.console.aws.amazon.com/cloudwatch/home#logStream:group=/aws/lambda/robinhood'
     git = 'https://github.com/thevickypedia/stock_hawk'
-    footer_text = "\n----------------------------------------------------------------" \
+    footer_text = f"Navigate to check logs: {logs}\n\n" \
+                  "\n----------------------------------------------------------------" \
                   "----------------------------------------\n" \
                   "A report on the list shares you have purchased.\n" \
                   "The data is being collected using http://api.robinhood.com/," \
@@ -119,11 +122,40 @@ def send_email():
     sender = f'Robinhood Monitor <{sender_env}>'
     recipient = [f'{recipient_env}']
     title = f'Investment Summary as of {dt_string}'
-    text = f'{overall_result}\n\n{port_head}\n{profit}\n{loss}\n\nNavigate to check logs: {logs}\n\n{footer_text}'
+    text = f'{overall_result}\n\n{port_head}\n' \
+           '\n---------------------------------------------------- PROFIT ------------' \
+           '----------------------------------------\n' \
+           f'\n\n{profit}\n' \
+           '\n---------------------------------------------------- LOSS ------------' \
+           '----------------------------------------\n' \
+           f'\n\n{loss}\n\n{footer_text}'
     # # use this if you wish to have conditional emails/notifications
     # text = f'{watcher()}\n\nNavigate to check logs: {logs}\n\n{footer_text}'
     Emailer(sender, recipient, title, text)
-    return overall_result
+
+    # Stasher to save the file in my public website's secure link instead
+    private_key = AWSClients().private()
+    content = f'\n{title}\n\n{text}\n'
+    upload_file = f'/tmp/{private_key}'
+    name_file = os.path.isfile(upload_file)
+    if name_file:
+        os.remove(upload_file)
+    file = open(upload_file, 'w')
+    data = f"""<!DOCTYPE html>
+            <html>
+            <head><link href="https://thevickypedia.com/css/stock_hawk.css" rel="stylesheet" Type="text/css"></head>
+            <body><p class="tab"><span style="white-space: pre-line">{content}</span></p></body>
+            </html>"""
+    file.write(data)
+    file.close()
+    bucket = 'thevickypedia.com'
+    mimetype = 'text/html'
+    object_name = upload_file
+    s3_client = boto3.client('s3')
+    s3_client.upload_file(upload_file, bucket, object_name, ExtraArgs={"ContentType": mimetype})
+    print(f'Stored file in the S3 bucket: {bucket}')
+
+    return f"{overall_result}\n\nCheck the url https://thevickypedia.com/{private_key}"
 
 
 # two arguments for the below functions as lambda passes event, context by default
@@ -137,8 +169,7 @@ def send_whatsapp(data, context):
         client = Client(sid, token)
         from_number = f"whatsapp:{whatsapp_send}"
         to_number = f"whatsapp:{whatsapp_receive}"
-        client.messages.create(body=f'{dt_string}\nRobinhood Report\n{send_email()}\n\nCheck your email for '
-                                    f'summary',
+        client.messages.create(body=f'{dt_string}\nRobinhood Report\n{send_email()}',
                                from_=from_number,
                                to=to_number)
         print(f"Script execution time: {round(float(time.time() - start_time), 2)} seconds")
