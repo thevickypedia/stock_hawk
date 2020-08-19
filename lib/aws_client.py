@@ -69,9 +69,3 @@ class AWSClients:
         param = response['Parameter']
         val = param['Value']
         return val
-
-    def private(self):
-        response = AWSClients.client.get_parameter(Name='thevickypedia_private', WithDecryption=True)
-        param = response['Parameter']
-        val = param['Value']
-        return val

@@ -136,12 +136,22 @@ def send_email():
     Emailer(sender, recipient, title, text)
 
     # Stasher to save the file in my public website's secure link instead
+    bucket_name = 'thevickypedia.com'
+    # Delete existing file
+    s3 = boto3.resource('s3')
+    objects_to_delete = s3.meta.client.list_objects(Bucket=bucket_name, Prefix="/tmp/")
+    delete_keys = {'Objects': [{'Key': k} for k in [obj['Key'] for obj in objects_to_delete.get('Contents', [])]]}
+    s3.meta.client.delete_objects(Bucket=bucket_name, Delete=delete_keys)
+    print(f"{delete_keys['Objects'][0]['Key']} was removed")
+
+    # Write new file
     client = boto3.client('s3')
     required_str = string.ascii_letters
     public_key = "".join(random.choices(required_str, k=16))
-    private_key = AWSClients().private()
+    secure_str = string.ascii_letters + string.digits
+    private_key = "".join(random.choices(secure_str, k=240))
     client.put_bucket_website(
-        Bucket='thevickypedia.com',
+        Bucket=bucket_name,
         WebsiteConfiguration={
             'ErrorDocument': {
                 'Key': 'loader.html'
@@ -161,7 +171,15 @@ def send_email():
             ]
         }
     )
-    content = f'\n{title}\n\n{text}\n'
+    web_text = f'{overall_result}\n\n{port_head}\n' \
+               '\n---------------------------------------------------- PROFIT ------------' \
+               '----------------------------------------\n' \
+               f'\n\n{profit}\n' \
+               '\n---------------------------------------------------- LOSS ------------' \
+               '----------------------------------------\n' \
+               f'\n\n{loss}\n\n'
+    content = f'\n\n{web_text}\n'
+    print(content)
     upload_file = f'/tmp/{private_key}'
     name_file = os.path.isfile(upload_file)
     if name_file:
@@ -169,19 +187,26 @@ def send_email():
     file = open(upload_file, 'w')
     data = f"""<!DOCTYPE html>
             <html>
-            <head><link href="https://thevickypedia.com/css/stock_hawk.css" rel="stylesheet" Type="text/css"></head>
-            <body><p class="tab"><span style="white-space: pre-line">{content}</span></p></body>
-            </html>"""
+            <head>
+            <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+            <meta http-equiv="Pragma" content="no-cache">
+            <meta http-equiv="Expires" content="0">
+            <link href="https://{bucket_name}/css/stock_hawk.css" rel="stylesheet" Type="text/css">
+            </head>
+            <body><p class="center">{title}</p>
+            <p class="tab"><span style="white-space: pre-line">{content}</span></p>
+            <div class="footer"><div align="center" class="content">
+            <p>Navigate to check <a href="{logs}" target="_bottom">logs</a></p>
+            </div></div><br></body></html>"""
     file.write(data)
     file.close()
-    bucket = 'thevickypedia.com'
     mimetype = 'text/html'
     object_name = upload_file
     s3_client = boto3.client('s3')
-    s3_client.upload_file(upload_file, bucket, object_name, ExtraArgs={"ContentType": mimetype})
-    print(f'Stored {public_key} in the S3 bucket: {bucket}')
+    s3_client.upload_file(upload_file, bucket_name, object_name, ExtraArgs={"ContentType": mimetype})
+    print(f'Stored {public_key} in the S3 bucket: {bucket_name}')
 
-    return f"{overall_result}\n\nCheck the url https://thevickypedia.com/{public_key}"
+    return f"{overall_result}\n\nCheck the url https://{bucket_name}/{public_key}"
 
 
 # two arguments for the below functions as lambda passes event, context by default
