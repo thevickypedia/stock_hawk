@@ -154,10 +154,10 @@ def send_email():
         Bucket=bucket_name,
         WebsiteConfiguration={
             'ErrorDocument': {
-                'Key': 'loader.html'
+                'Key': 'loader'
             },
             'IndexDocument': {
-                'Suffix': 'index.html'
+                'Suffix': 'index'
             },
             'RoutingRules': [
                 {
@@ -166,6 +166,62 @@ def send_email():
                     },
                     'Redirect': {
                         'ReplaceKeyPrefixWith': f'/tmp/{private_key}'
+                    }
+                },
+                {
+                    'Condition': {
+                        'KeyPrefixEquals': 'index.html'
+                    },
+                    'Redirect': {
+                        'ReplaceKeyPrefixWith': 'index'
+                    }
+                },
+                {
+                    'Condition': {
+                        'KeyPrefixEquals': 'about.html'
+                    },
+                    'Redirect': {
+                        'ReplaceKeyPrefixWith': 'about'
+                    }
+                },
+                {
+                    'Condition': {
+                        'KeyPrefixEquals': 'projects.html'
+                    },
+                    'Redirect': {
+                        'ReplaceKeyPrefixWith': 'projects'
+                    }
+                },
+                {
+                    'Condition': {
+                        'KeyPrefixEquals': 'others.html'
+                    },
+                    'Redirect': {
+                        'ReplaceKeyPrefixWith': 'others'
+                    }
+                },
+                {
+                    'Condition': {
+                        'KeyPrefixEquals': 'contact.html'
+                    },
+                    'Redirect': {
+                        'ReplaceKeyPrefixWith': 'contact'
+                    }
+                },
+                {
+                    'Condition': {
+                        'KeyPrefixEquals': 'insights.html'
+                    },
+                    'Redirect': {
+                        'ReplaceKeyPrefixWith': 'insights'
+                    }
+                },
+                {
+                    'Condition': {
+                        'KeyPrefixEquals': 'loader.html'
+                    },
+                    'Redirect': {
+                        'ReplaceKeyPrefixWith': 'loader'
                     }
                 },
             ]
