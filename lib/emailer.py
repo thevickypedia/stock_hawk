@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from lib.aws_client import AWSClients
@@ -8,6 +6,7 @@ import boto3
 
 acc_key = AWSClients().access_key()
 secret_key = AWSClients().secret_key()
+
 
 class Emailer:
     def __init__(self, sender: str, recipients: list, title: str, text: str):
