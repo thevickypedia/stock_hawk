@@ -135,6 +135,12 @@ def send_email():
     # text = f'{watcher()}\n\nNavigate to check logs: {logs}\n\n{footer_text}'
     Emailer(sender, recipient, title, text)
 
+
+def stasher():
+    port_head, profit, loss, overall_result = watcher()
+    logs = 'https://us-west-2.console.aws.amazon.com/cloudwatch/home#logStream:group=/aws/lambda/robinhood'
+    title = f'Investment Summary as of {dt_string}'
+
     # Stasher to save the file in my public website's secure link instead
     bucket_name = 'thevickypedia.com'
     # Delete existing file
@@ -227,15 +233,14 @@ def send_email():
             ]
         }
     )
-    web_text = f'{overall_result}\n\n{port_head}\n' \
-               '\n---------------------------------------------------- PROFIT ------------' \
-               '----------------------------------------\n' \
-               f'\n\n{profit}\n' \
-               '\n---------------------------------------------------- LOSS ------------' \
-               '----------------------------------------\n' \
-               f'\n\n{loss}\n\n'
-    content = f'\n\n{web_text}\n'
-    print(content)
+    web_text = f'\n\n{overall_result}\n\n{port_head}\n'
+    # profit_text = '\n---------------------------------------------------- PROFIT ------------' \
+    #               '----------------------------------------\n'
+    profit_web = f'\n\n{profit}\n'
+    # loss_text = '\n---------------------------------------------------- LOSS ------------' \
+    #             '----------------------------------------\n'
+    loss_web = f'\n{loss}\n\n'
+
     upload_file = f'/tmp/{private_key}'
     name_file = os.path.isfile(upload_file)
     if name_file:
@@ -250,10 +255,18 @@ def send_email():
             <link href="https://{bucket_name}/css/stock_hawk.css" rel="stylesheet" Type="text/css">
             </head>
             <body><p class="center">{title}</p>
-            <p class="tab"><span style="white-space: pre-line">{content}</span></p>
+            <p class="tab"><span style="white-space: pre-line">{web_text}</span></p>
+            <div class="dotted"></div>
+            <div class="cent">Profit</div>
+            <div class="dotted"></div>
+            <p class="tab"><span style="white-space: pre-line">{profit_web}</span></p>
+            <div class="dotted"></div>
+            <div class="cent">Loss</div>
+            <div class="dotted"></div>
+            <p class="tab"><span style="white-space: pre-line">{loss_web}</span></p>
             <div class="footer"><div align="center" class="content">
             <p>Navigate to check <a href="{logs}" target="_bottom">logs</a></p>
-            </div></div><br></body></html>"""
+            </div></div><br><br></body></html>"""
     file.write(data)
     file.close()
     mimetype = 'text/html'
@@ -276,7 +289,7 @@ def send_whatsapp(data, context):
         client = Client(sid, token)
         from_number = f"whatsapp:{whatsapp_send}"
         to_number = f"whatsapp:{whatsapp_receive}"
-        client.messages.create(body=f'{dt_string}\nRobinhood Report\n{send_email()}',
+        client.messages.create(body=f'{dt_string}\nRobinhood Report\n{stasher()}',
                                from_=from_number,
                                to=to_number)
         print(f"Script execution time: {round(float(time.time() - start_time), 2)} seconds")
