@@ -1,0 +1,39 @@
+.tab {
+ margin-left: 40px;
+}
+
+body {
+ background-image: url(../img/insights.jpg);
+}
+
+p.center {
+ text-align: center;
+}
+
+div{
+    height:1em;
+}
+
+.left,.right{
+    padding:1px 0.5em;
+    background:#fff;
+    float:right;
+}
+
+.left{
+    float:left;
+    clear:both;
+}
+
+.dotted{
+    border-bottom: 3px dotted black;
+    margin-bottom: 0px;
+}
+
+.cent {
+ margin-top: 1%;
+ text-align: center;
+ font-size: 120%;
+}
+
+/*http://jsfiddle.net/c3r7tufq/49/*/
