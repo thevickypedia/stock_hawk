@@ -1,3 +1,5 @@
+import json
+import math
 import os
 import random
 import string
@@ -6,12 +8,19 @@ from datetime import datetime, timedelta, date
 
 import boto3
 import requests
+from pyrh import Robinhood
 
 from lib.aws_client import AWSClients
 
 start_time = time.time()
 now = datetime.now() - timedelta(hours=5)
 dt_string = now.strftime("%A, %B %d, %Y %I:%M %p")
+
+u = AWSClients().user()
+p = AWSClients().pass_()
+q = AWSClients().qr_code()
+rh = Robinhood()
+rh.login(username=u, password=p, qr_code=q)
 
 
 def market_status():
@@ -26,14 +35,6 @@ def market_status():
 
 
 def watcher():
-    from pyrh import Robinhood
-    import json
-    import math
-    u = AWSClients().user()
-    p = AWSClients().pass_()
-    q = AWSClients().qr_code()
-    rh = Robinhood()
-    rh.login(username=u, password=p, qr_code=q)
     print(dt_string)
     print('Gathering your investment details...')
     raw_result = (rh.positions())
@@ -102,9 +103,6 @@ def watcher():
         output += f"\nCurrent Dip: ${two_day_diff}"
     else:
         output += f"\nCurrent Spike: ${two_day_diff}"
-    # # use this if you wish to have conditional emails/notifications
-    # final_output = f'{output}\n\n{port_msg}\n{profit_output}\n{loss_output}'
-    # return final_output
     return port_msg, profit_output, loss_output, output
 
 
@@ -138,6 +136,7 @@ def send_email():
 
 def stasher():
     port_head, profit, loss, overall_result = watcher()
+    s1, s2 = watchlists()
     logs = 'https://us-west-2.console.aws.amazon.com/cloudwatch/home#logStream:group=/aws/lambda/robinhood'
     title = f'Investment Summary as of {dt_string}'
 
@@ -264,6 +263,13 @@ def stasher():
             <div class="cent">Loss</div>
             <div class="dotted"></div>
             <p class="tab"><span style="white-space: pre-line">{loss_web}</span></p>
+            <div class="dotted"></div>
+            <div class="cent">Watchlist</div>
+            <div class="dotted"></div>
+            <p class="tab">Increasing stocks</p>
+            <p class="tab"><span style="white-space: pre-line">{s2}</span></p>
+            <p class="tab">Decreasing stocks</p>
+            <p class="tab"><span style="white-space: pre-line">{s1}</span></p>
             <div class="footer"><div align="center" class="content">
             <p>Navigate to check <a href="{logs}" target="_bottom">logs</a></p>
             </div></div><br><br></body></html>"""
@@ -295,6 +301,34 @@ def send_whatsapp(data, context):
         print(f"Script execution time: {round(float(time.time() - start_time), 2)} seconds")
     else:
         return  # a plain return acts as a break statement as the None value is not used anywhere
+
+
+def watchlists():
+    watchlist = (rh.get_watchlists())
+    r1, r2 = '', ''
+    for item in watchlist:
+        stock = item['symbol']
+        raw_details = rh.get_quote(stock)
+        call = raw_details['instrument']
+        # historic_data = rh.get_historical_quotes(stock, 'hour', 'day')
+        historic_data = rh.get_historical_quotes(stock, '10minute', 'day')
+        historic_results = historic_data['results']
+        numbers = []
+        for each_item in historic_results:
+            historical_values = (each_item['historicals'])
+            for close_price in historical_values:
+                numbers.append(round(float(close_price['close_price']), 2))
+        r = requests.get(call)
+        response = r.text
+        json_load = json.loads(response)
+        stock_name = json_load['simple_name']
+        price = round(float(raw_details['last_trade_price']), 2)
+        diff1 = round(float(price - numbers[0]), 2)
+        if price < numbers[0]:
+            r1 += f'{stock_name}({stock}) - {price} &#8595 {diff1}\n'
+        else:
+            r2 += f'{stock_name}({stock}) - {price} &#8593 {diff1}\n'
+    return r1, r2
 
 
 if __name__ == '__main__':
