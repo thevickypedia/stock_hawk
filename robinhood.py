@@ -106,6 +106,35 @@ def watcher():
     return port_msg, profit_output, loss_output, output
 
 
+def watchlists():
+    from pprint import pprint
+    watchlist = (rh.get_watchlists())
+    r1, r2 = '', ''
+    for item in watchlist:
+        stock = item['symbol']
+        raw_details = rh.get_quote(stock)
+        call = raw_details['instrument']
+        # historic_data = rh.get_historical_quotes(stock, 'hour', 'day')
+        historic_data = rh.get_historical_quotes(stock, '10minute', 'day')
+        historic_results = historic_data['results']
+        numbers = []
+        for each_item in historic_results:
+            historical_values = each_item['historicals']
+            for close_price in historical_values:
+                numbers.append(round(float(close_price['close_price']), 2))
+        r = requests.get(call)
+        response = r.text
+        json_load = json.loads(response)
+        stock_name = json_load['simple_name']
+        price = round(float(raw_details['last_trade_price']), 2)
+        diff1 = round(float(price - numbers[-1]), 2)
+        if price < numbers[-1]:
+            r1 += f'{stock_name}({stock}) - {price} &#8595 {diff1}\n'
+        else:
+            r2 += f'{stock_name}({stock}) - {price} &#8593 {diff1}\n'
+    return r1, r2
+
+
 def send_email():
     port_head, profit, loss, overall_result = watcher()
     from lib.emailer import Emailer
@@ -299,36 +328,6 @@ def send_whatsapp(data, context):
                                from_=from_number,
                                to=to_number)
         print(f"Script execution time: {round(float(time.time() - start_time), 2)} seconds")
-    else:
-        return  # a plain return acts as a break statement as the None value is not used anywhere
-
-
-def watchlists():
-    watchlist = (rh.get_watchlists())
-    r1, r2 = '', ''
-    for item in watchlist:
-        stock = item['symbol']
-        raw_details = rh.get_quote(stock)
-        call = raw_details['instrument']
-        # historic_data = rh.get_historical_quotes(stock, 'hour', 'day')
-        historic_data = rh.get_historical_quotes(stock, '10minute', 'day')
-        historic_results = historic_data['results']
-        numbers = []
-        for each_item in historic_results:
-            historical_values = (each_item['historicals'])
-            for close_price in historical_values:
-                numbers.append(round(float(close_price['close_price']), 2))
-        r = requests.get(call)
-        response = r.text
-        json_load = json.loads(response)
-        stock_name = json_load['simple_name']
-        price = round(float(raw_details['last_trade_price']), 2)
-        diff1 = round(float(price - numbers[0]), 2)
-        if price < numbers[0]:
-            r1 += f'{stock_name}({stock}) - {price} &#8595 {diff1}\n'
-        else:
-            r2 += f'{stock_name}({stock}) - {price} &#8593 {diff1}\n'
-    return r1, r2
 
 
 if __name__ == '__main__':
