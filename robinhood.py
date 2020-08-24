@@ -21,6 +21,8 @@ p = AWSClients().pass_()
 q = AWSClients().qr_code()
 rh = Robinhood()
 rh.login(username=u, password=p, qr_code=q)
+raw_result = rh.positions()
+result = raw_result['results']
 
 
 def market_status():
@@ -37,8 +39,6 @@ def market_status():
 def watcher():
     print(dt_string)
     print('Gathering your investment details...')
-    raw_result = (rh.positions())
-    result = raw_result['results']
     shares_total = []
     port_msg = f'Your portfolio:\n'
     loss_output = 'Loss:'
@@ -52,7 +52,7 @@ def watcher():
         buy = round(float(data['average_buy_price']), 2)
         shares_count = int(data['quantity'].split('.')[0])
         if shares_count != 0:
-            n = n + 1  # number of stocks means
+            n = n + 1
             n_ = n_ + shares_count
         else:
             continue
@@ -107,31 +107,35 @@ def watcher():
 
 
 def watchlists():
-    from pprint import pprint
     watchlist = (rh.get_watchlists())
     r1, r2 = '', ''
+    instruments = []
+    for data in result:
+        instruments.append(data['instrument'])
     for item in watchlist:
-        stock = item['symbol']
-        raw_details = rh.get_quote(stock)
-        call = raw_details['instrument']
-        # historic_data = rh.get_historical_quotes(stock, 'hour', 'day')
-        historic_data = rh.get_historical_quotes(stock, '10minute', 'day')
-        historic_results = historic_data['results']
-        numbers = []
-        for each_item in historic_results:
-            historical_values = each_item['historicals']
-            for close_price in historical_values:
-                numbers.append(round(float(close_price['close_price']), 2))
-        r = requests.get(call)
-        response = r.text
-        json_load = json.loads(response)
-        stock_name = json_load['simple_name']
-        price = round(float(raw_details['last_trade_price']), 2)
-        diff1 = round(float(price - numbers[-1]), 2)
-        if price < numbers[-1]:
-            r1 += f'{stock_name}({stock}) - {price} &#8595 {diff1}\n'
-        else:
-            r2 += f'{stock_name}({stock}) - {price} &#8593 {diff1}\n'
+        instrument = item['url']
+        if instrument not in instruments:
+            stock = item['symbol']
+            raw_details = rh.get_quote(stock)
+            call = raw_details['instrument']
+            historic_data = rh.get_historical_quotes(stock, 'hour', 'day')
+            # historic_data = rh.get_historical_quotes(stock, '10minute', 'day')
+            historic_results = historic_data['results']
+            numbers = []
+            for each_item in historic_results:
+                historical_values = each_item['historicals']
+                for close_price in historical_values:
+                    numbers.append(round(float(close_price['close_price']), 2))
+            r = requests.get(call)
+            response = r.text
+            json_load = json.loads(response)
+            stock_name = json_load['simple_name']
+            price = round(float(raw_details['last_trade_price']), 2)
+            difference = round(float(price - numbers[-1]), 2)
+            if price < numbers[-1]:
+                r1 += f'{stock_name}({stock}) - {price} &#8595 {difference}\n'
+            else:
+                r2 += f'{stock_name}({stock}) - {price} &#8593 {difference}\n'
     return r1, r2
 
 
@@ -295,9 +299,7 @@ def stasher():
             <div class="dotted"></div>
             <div class="cent">Watchlist</div>
             <div class="dotted"></div>
-            <p class="tab">Increasing stocks</p>
             <p class="tab"><span style="white-space: pre-line">{s2}</span></p>
-            <p class="tab">Decreasing stocks</p>
             <p class="tab"><span style="white-space: pre-line">{s1}</span></p>
             <div class="footer"><div align="center" class="content">
             <p>Navigate to check <a href="{logs}" target="_bottom">logs</a></p>
