@@ -69,3 +69,15 @@ class AWSClients:
         param = response['Parameter']
         val = param['Value']
         return val
+
+    def private_key(self):
+        response = AWSClients.client.get_parameter(Name='private_key', WithDecryption=True)
+        param = response['Parameter']
+        val = param['Value']
+        return val
+
+    def public_key(self):
+        response = AWSClients.client.get_parameter(Name='public_key', WithDecryption=True)
+        param = response['Parameter']
+        val = param['Value']
+        return val

@@ -175,96 +175,99 @@ def stasher():
 
     # Stasher to save the file in my public website's secure link instead
     bucket_name = 'thevickypedia.com'
-    # Delete existing file
-    s3 = boto3.resource('s3')
-    objects_to_delete = s3.meta.client.list_objects(Bucket=bucket_name, Prefix="/tmp/")
-    delete_keys = {'Objects': [{'Key': k} for k in [obj['Key'] for obj in objects_to_delete.get('Contents', [])]]}
-    s3.meta.client.delete_objects(Bucket=bucket_name, Delete=delete_keys)
-    print(f"{delete_keys['Objects'][0]['Key']} was removed")
+    public_key = AWSClients().public_key()
+    private_key = AWSClients().private_key()
 
-    # Write new file
-    client = boto3.client('s3')
-    required_str = string.ascii_letters
-    public_key = "".join(random.choices(required_str, k=16))
-    secure_str = string.ascii_letters + string.digits
-    private_key = "".join(random.choices(secure_str, k=240))
-    client.put_bucket_website(
-        Bucket=bucket_name,
-        WebsiteConfiguration={
-            'ErrorDocument': {
-                'Key': 'loader'
-            },
-            'IndexDocument': {
-                'Suffix': 'index'
-            },
-            'RoutingRules': [
-                {
-                    'Condition': {
-                        'KeyPrefixEquals': f'{public_key}'
-                    },
-                    'Redirect': {
-                        'ReplaceKeyPrefixWith': f'/tmp/{private_key}'
-                    }
-                },
-                {
-                    'Condition': {
-                        'KeyPrefixEquals': 'index.html'
-                    },
-                    'Redirect': {
-                        'ReplaceKeyPrefixWith': 'index'
-                    }
-                },
-                {
-                    'Condition': {
-                        'KeyPrefixEquals': 'about.html'
-                    },
-                    'Redirect': {
-                        'ReplaceKeyPrefixWith': 'about'
-                    }
-                },
-                {
-                    'Condition': {
-                        'KeyPrefixEquals': 'projects.html'
-                    },
-                    'Redirect': {
-                        'ReplaceKeyPrefixWith': 'projects'
-                    }
-                },
-                {
-                    'Condition': {
-                        'KeyPrefixEquals': 'others.html'
-                    },
-                    'Redirect': {
-                        'ReplaceKeyPrefixWith': 'others'
-                    }
-                },
-                {
-                    'Condition': {
-                        'KeyPrefixEquals': 'contact.html'
-                    },
-                    'Redirect': {
-                        'ReplaceKeyPrefixWith': 'contact'
-                    }
-                },
-                {
-                    'Condition': {
-                        'KeyPrefixEquals': 'insights.html'
-                    },
-                    'Redirect': {
-                        'ReplaceKeyPrefixWith': 'insights'
-                    }
-                },
-                {
-                    'Condition': {
-                        'KeyPrefixEquals': 'loader.html'
-                    },
-                    'Redirect': {
-                        'ReplaceKeyPrefixWith': 'loader'
-                    }
-                },
-            ]
-        }
-    )
+    # # Delete existing file
+    # s3 = boto3.resource('s3')
+    # objects_to_delete = s3.meta.client.list_objects(Bucket=bucket_name, Prefix="/tmp/")
+    # delete_keys = {'Objects': [{'Key': k} for k in [obj['Key'] for obj in objects_to_delete.get('Contents', [])]]}
+    # s3.meta.client.delete_objects(Bucket=bucket_name, Delete=delete_keys)
+    # print(f"{delete_keys['Objects'][0]['Key']} was removed")
+
+    # # Write new file
+    # client = boto3.client('s3')
+    # required_str = string.ascii_letters
+    # public_key = "".join(random.choices(required_str, k=16))
+    # secure_str = string.ascii_letters + string.digits
+    # private_key = "".join(random.choices(secure_str, k=240))
+    # client.put_bucket_website(
+    #     Bucket=bucket_name,
+    #     WebsiteConfiguration={
+    #         'ErrorDocument': {
+    #             'Key': 'loader'
+    #         },
+    #         'IndexDocument': {
+    #             'Suffix': 'index'
+    #         },
+    #         'RoutingRules': [
+    #             {
+    #                 'Condition': {
+    #                     'KeyPrefixEquals': f'{public_key}'
+    #                 },
+    #                 'Redirect': {
+    #                     'ReplaceKeyPrefixWith': f'/tmp/{private_key}'
+    #                 }
+    #             },
+    #             {
+    #                 'Condition': {
+    #                     'KeyPrefixEquals': 'index.html'
+    #                 },
+    #                 'Redirect': {
+    #                     'ReplaceKeyPrefixWith': 'index'
+    #                 }
+    #             },
+    #             {
+    #                 'Condition': {
+    #                     'KeyPrefixEquals': 'about.html'
+    #                 },
+    #                 'Redirect': {
+    #                     'ReplaceKeyPrefixWith': 'about'
+    #                 }
+    #             },
+    #             {
+    #                 'Condition': {
+    #                     'KeyPrefixEquals': 'projects.html'
+    #                 },
+    #                 'Redirect': {
+    #                     'ReplaceKeyPrefixWith': 'projects'
+    #                 }
+    #             },
+    #             {
+    #                 'Condition': {
+    #                     'KeyPrefixEquals': 'others.html'
+    #                 },
+    #                 'Redirect': {
+    #                     'ReplaceKeyPrefixWith': 'others'
+    #                 }
+    #             },
+    #             {
+    #                 'Condition': {
+    #                     'KeyPrefixEquals': 'contact.html'
+    #                 },
+    #                 'Redirect': {
+    #                     'ReplaceKeyPrefixWith': 'contact'
+    #                 }
+    #             },
+    #             {
+    #                 'Condition': {
+    #                     'KeyPrefixEquals': 'insights.html'
+    #                 },
+    #                 'Redirect': {
+    #                     'ReplaceKeyPrefixWith': 'insights'
+    #                 }
+    #             },
+    #             {
+    #                 'Condition': {
+    #                     'KeyPrefixEquals': 'loader.html'
+    #                 },
+    #                 'Redirect': {
+    #                     'ReplaceKeyPrefixWith': 'loader'
+    #                 }
+    #             },
+    #         ]
+    #     }
+    # )
     web_text = f'\n\n{overall_result}\n\n{port_head}\n'
     # profit_text = '\n---------------------------------------------------- PROFIT ------------' \
     #               '----------------------------------------\n'
