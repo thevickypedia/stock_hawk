@@ -167,7 +167,10 @@ def send_email():
 
 def stasher():
     port_head, profit, loss, overall_result = watcher()
-    s1, s2 = watchlists()
+    try:
+        s1, s2 = watchlists()
+    except IndexError:
+        s1, s2 = '', 'Watchlist feature is currently unstable.'
     logs = 'https://us-west-2.console.aws.amazon.com/cloudwatch/home#logStream:group=/aws/lambda/robinhood'
     title = f'Investment Summary as of {dt_string}'
 
