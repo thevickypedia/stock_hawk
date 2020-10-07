@@ -39,8 +39,8 @@ def watcher():
     print('Gathering your investment details...')
     shares_total = []
     port_msg = f'Your portfolio:\n'
-    loss_output = 'Loss:'
-    profit_output = 'Profit:'
+    loss_output = ''
+    profit_output = ''
     loss_total = []
     profit_total = []
     n = 0
@@ -68,13 +68,15 @@ def watcher():
         difference = round(float(current_total - total), 2)
         if difference < 0:
             loss_output += (
-                f'\n{share_full_name}:\n{shares_count} shares of {share_name} at ${buy} Currently: ${current}\n'
+                f'\n{share_full_name}:\n{shares_count} shares of <a href="https://robinhood.com/stocks/{share_name}" '
+                f'target="_bottom">{share_name}</a> at ${buy} Currently: ${current}\n '
                 f'Total bought: ${total} Current Total: ${current_total}'
                 f'\nLOST ${-difference}\n')
             loss_total.append(-difference)
         else:
             profit_output += (
-                f'\n{share_full_name}:\n{shares_count} shares of {share_name} at ${buy} Currently: ${current}\n'
+                f'\n{share_full_name}:\n{shares_count} shares of <a href="https://robinhood.com/stocks/{share_name}" '
+                f'target="_bottom">{share_name}</a> at ${buy} Currently: ${current}\n'
                 f'Total bought: ${total} Current Total: ${current_total}'
                 f'\nGained ${difference}\n')
             profit_total.append(difference)
