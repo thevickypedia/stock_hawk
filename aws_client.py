@@ -4,44 +4,20 @@ import boto3
 class AWSClients:
     client = boto3.client('ssm')
 
-    def user(self):
-        response = AWSClients.client.get_parameter(Name='user', WithDecryption=True)
+    def robinhood_user(self):
+        response = AWSClients.client.get_parameter(Name='/Jarvis/robinhood_user', WithDecryption=True)
         param = response['Parameter']
         val = param['Value']
         return val
 
-    def pass_(self):
-        response = AWSClients.client.get_parameter(Name='pass', WithDecryption=True)
+    def robinhood_pass(self):
+        response = AWSClients.client.get_parameter(Name='/Jarvis/robinhood_pass', WithDecryption=True)
         param = response['Parameter']
         val = param['Value']
         return val
 
-    def qr_code(self):
-        response = AWSClients.client.get_parameter(Name='qr', WithDecryption=True)
-        param = response['Parameter']
-        val = param['Value']
-        return val
-
-    def access_key(self):
-        response = AWSClients.client.get_parameter(Name='ACCESS_KEY', WithDecryption=True)
-        param = response['Parameter']
-        val = param['Value']
-        return val
-
-    def secret_key(self):
-        response = AWSClients.client.get_parameter(Name='SECRET_KEY', WithDecryption=True)
-        param = response['Parameter']
-        val = param['Value']
-        return val
-
-    def sender(self):
-        response = AWSClients.client.get_parameter(Name='SENDER', WithDecryption=True)
-        param = response['Parameter']
-        val = param['Value']
-        return val
-
-    def recipient(self):
-        response = AWSClients.client.get_parameter(Name='RECIPIENT', WithDecryption=True)
+    def robinhood_qr(self):
+        response = AWSClients.client.get_parameter(Name='/Jarvis/robinhood_qr', WithDecryption=True)
         param = response['Parameter']
         val = param['Value']
         return val
@@ -53,7 +29,7 @@ class AWSClients:
         return val
 
     def receive(self):
-        response = AWSClients.client.get_parameter(Name='RECEIVE', WithDecryption=True)
+        response = AWSClients.client.get_parameter(Name='/Jarvis/phone', WithDecryption=True)
         param = response['Parameter']
         val = param['Value']
         return val

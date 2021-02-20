@@ -1,0 +1,5 @@
+twilio==6.45.3
+boto3==1.15.4
+pyrh==2.0
+pytz==2020.1
+requests==2.24.0

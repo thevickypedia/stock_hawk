@@ -2,23 +2,23 @@ import json
 import math
 import os
 import time
-from datetime import datetime, timedelta, date
+from datetime import datetime, date
 
 import boto3
+import pytz
 import requests
 from pyrh import Robinhood
 
-from lib.aws_client import AWSClients
+from aws_client import AWSClients
 
-start_time = time.time()
-now = datetime.now() - timedelta(hours=5)
-dt_string = now.strftime("%A, %B %d, %Y %I:%M %p")
+current_time = datetime.now(pytz.timezone('US/Central'))
+dt_string = current_time.strftime("%A, %B %d, %Y %I:%M %p")
 
-u = AWSClients().user()
-p = AWSClients().pass_()
-q = AWSClients().qr_code()
+robinhood_user = AWSClients().robinhood_user()
+robinhood_pass = AWSClients().robinhood_pass()
+robinhood_qr = AWSClients().robinhood_qr()
 rh = Robinhood()
-rh.login(username=u, password=p, qr_code=q)
+rh.login(username=robinhood_user, password=robinhood_pass, qr_code=robinhood_qr)
 raw_result = rh.positions()
 result = raw_result['results']
 
@@ -137,34 +137,6 @@ def watchlists():
             else:
                 r2 += f'{stock_name}({stock}) - {price} &#8593 {difference}\n'
     return r1, r2
-
-
-def send_email():
-    port_head, profit, loss, overall_result = watcher()
-    from lib.emailer import Emailer
-    sender_env = AWSClients().sender()
-    recipient_env = AWSClients().recipient()
-    logs = 'https://us-west-2.console.aws.amazon.com/cloudwatch/home#logStream:group=/aws/lambda/robinhood'
-    git = 'https://github.com/thevickypedia/stock_hawk'
-    footer_text = f"Navigate to check logs: {logs}\n\n" \
-                  "\n----------------------------------------------------------------" \
-                  "----------------------------------------\n" \
-                  "A report on the list shares you have purchased.\n" \
-                  "The data is being collected using http://api.robinhood.com/," \
-                  f"\nFor more information check README.md in {git}"
-    sender = f'Robinhood Monitor <{sender_env}>'
-    recipient = [f'{recipient_env}']
-    title = f'Investment Summary as of {dt_string}'
-    text = f'{overall_result}\n\n{port_head}\n' \
-           '\n---------------------------------------------------- PROFIT ------------' \
-           '----------------------------------------\n' \
-           f'\n\n{profit}\n' \
-           '\n---------------------------------------------------- LOSS ------------' \
-           '----------------------------------------\n' \
-           f'\n\n{loss}\n\n{footer_text}'
-    # # use this if you wish to have conditional emails/notifications
-    # text = f'{watcher()}\n\nNavigate to check logs: {logs}\n\n{footer_text}'
-    Emailer(sender, recipient, title, text)
 
 
 def stasher():
@@ -335,7 +307,7 @@ def send_whatsapp(data, context):
         client.messages.create(body=f'{dt_string}\nRobinhood Report\n{stasher()}',
                                from_=from_number,
                                to=to_number)
-        print(f"Script execution time: {round(float(time.time() - start_time), 2)} seconds")
+        print(f"Script execution time: {round(float(time.perf_counter()), 2)} seconds")
 
 
 if __name__ == '__main__':
