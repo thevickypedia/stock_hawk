@@ -1,11 +1,36 @@
 # Stock Hawk: 
 This is the AWS version of [robinhood_monitor](https://github.com/thevickypedia/robinhood_monitor)
 
-This repo contains scripts that run on lambda connecting to SSM.<br>
-Previous Update: Using SSM connector, I got rid of local environment variables which improves secured storage.<br>
-Latest update: This script will store information in a 250 digit key (suffixed https://thevickypedia.com/) which is randomly generated each time. This 250 digit key can be accessed by a 16 digit public key on my whats app notifications.
+This repo contains scripts that run on lambda connecting to SSM.
 
 Refer [Wiki](https://github.com/thevickypedia/stock_hawk/wiki) for setup information.
+
+The following needs to be added before `GET FUNDAMENTALS` in `pyrh/robinhood.py` to get the watchlist feature working.
+
+Refer https://github.com/robinhood-unofficial/pyrh/pull/274
+
+```python
+###########################################################################
+#                           GET WATCHLIST
+###########################################################################
+
+def get_watchlists(self):
+    """Fetch watchlists endpoint and queries for
+    each instrumented result aka stock details returned from the watchlist
+    Returns:
+        (:obj:`dict`): values returned from `watchlists` and `instrument` endpoints
+    """
+    api_url = "https://api.robinhood.com"
+    url = api_url + "/watchlists/"
+    res = []
+    watchlist = self.get_url(url)
+    if watchlist and 'results' in watchlist:
+        data = self.get_url(watchlist["results"][0]["url"])
+        for rec in data["results"]:
+            res.append(self.get_url(rec['instrument']))
+
+    return res
+```
 
 ## License & copyright
 

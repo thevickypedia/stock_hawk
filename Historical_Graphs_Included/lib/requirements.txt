@@ -1,5 +1,0 @@
-pyrh
-datetime
-requests
-twilio
-matplotlib

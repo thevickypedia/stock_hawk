@@ -296,17 +296,7 @@ def stasher():
 # two arguments for the below functions as lambda passes event, context by default
 def send_whatsapp(data, context):
     if market_status():
-        from twilio.rest import Client
-        whatsapp_send = AWSClients().send()
-        whatsapp_receive = AWSClients().receive()
-        sid = AWSClients().sid()
-        token = AWSClients().token()
-        client = Client(sid, token)
-        from_number = f"whatsapp:{whatsapp_send}"
-        to_number = f"whatsapp:{whatsapp_receive}"
-        client.messages.create(body=f'{dt_string}\nRobinhood Report\n{stasher()}',
-                               from_=from_number,
-                               to=to_number)
+        print(stasher())  # msg that used to get sent in whatsapp/regular SMS
         print(f"Script execution time: {round(float(time.perf_counter()), 2)} seconds")
 
 
